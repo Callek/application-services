@@ -587,6 +587,12 @@ class FirefoxAccount(handle: FxaHandle, persistCallback: PersistCallback?) : Aut
         }
     }
 
+    fun gatherTelemetry(): String {
+        return rustCallWithLock { e ->
+            LibFxAFFI.INSTANCE.fxa_gather_telemetry(this.handle.get(), e)
+        }.getAndConsumeRustString()
+    }
+
     @Synchronized
     override fun close() {
         val handle = this.handle.getAndSet(0)

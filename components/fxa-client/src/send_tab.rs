@@ -10,7 +10,7 @@ use crate::{
     error::*,
     http_client::GetDeviceResponse,
     scopes,
-    telemetry::SentReceivedTab,
+    telemetry::ReceivedCommand,
     FirefoxAccount, IncomingDeviceCommand,
 };
 
@@ -40,9 +40,10 @@ impl FirefoxAccount {
     }
 
     /// Send a single tab to another device designated by its device ID.
-    /// XXX - this should change to taking a Vec of device IDs, because
-    /// collecting telemetry relies on a multi-device send happening in a single
-    /// operation.
+    /// XXX - We need a new send_tabs_to_devices() so we can correctly record
+    /// telemetry for these cases.
+    /// This probably requires a new "Tab" struct with the title and url.
+    /// android-components has SendToAllUseCase(), so this isn't just theoretical.
     pub fn send_tab(&mut self, target_device_id: &str, title: &str, url: &str) -> Result<()> {
         let devices = self.get_devices(false)?;
         let target = devices
@@ -76,7 +77,7 @@ impl FirefoxAccount {
         match encrypted_payload.decrypt(&send_tab_key) {
             Ok(payload) => {
                 // It's an incoming tab, which we record telemetry for.
-                let recd_telemetry = SentReceivedTab {
+                let recd_telemetry = ReceivedCommand {
                     flow_id: payload.flow_id.clone(),
                     stream_id: payload.stream_id.clone(),
                 };

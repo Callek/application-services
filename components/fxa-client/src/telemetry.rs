@@ -12,7 +12,13 @@ use serde_derive::*;
 
 // First, constituent parts
 #[derive(Debug, Serialize)]
-pub struct SentReceivedTab {
+pub struct SentCommand {
+    pub flow_id: String,
+    pub stream_id: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ReceivedCommand {
     pub flow_id: String,
     pub stream_id: String,
 }
@@ -21,31 +27,30 @@ pub struct SentReceivedTab {
 // is that if any platform lets things grow to hit these limits, it's probably
 // never going to consume anything - so it doesn't matter what we discard (ie,
 // there's no good reason to have a smarter circular buffer etc)
-const MAX_TAB_EVENTS: usize = 20;
+const MAX_TAB_EVENTS: usize = 200;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct FxaTelemetry {
-    sent_tabs: Vec<SentReceivedTab>,
-    received_tabs: Vec<SentReceivedTab>,
+    commands_sent: Vec<SentCommand>,
+    commands_received: Vec<ReceivedCommand>,
 }
 
 impl FxaTelemetry {
     pub fn new() -> Self {
         FxaTelemetry {
-            sent_tabs: Vec::new(),
-            received_tabs: Vec::new(),
+            ..Default::default()
         }
     }
 
-    pub fn record_tab_sent(&mut self, sent: SentReceivedTab) {
-        if self.sent_tabs.len() < MAX_TAB_EVENTS {
-            self.sent_tabs.push(sent);
+    pub fn record_tab_sent(&mut self, sent: SentCommand) {
+        if self.commands_sent.len() < MAX_TAB_EVENTS {
+            self.commands_sent.push(sent);
         }
     }
 
-    pub fn record_tab_received(&mut self, recd: SentReceivedTab) {
-        if self.received_tabs.len() < MAX_TAB_EVENTS {
-            self.received_tabs.push(recd);
+    pub fn record_tab_received(&mut self, recd: ReceivedCommand) {
+        if self.commands_received.len() < MAX_TAB_EVENTS {
+            self.commands_received.push(recd);
         }
     }
 }

@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use crate::telemetry::SentReceivedTab;
 /// The Send Tab functionality is backed by Firefox Accounts device commands.
 /// A device shows it can handle "Send Tab" commands by advertising the "open-uri"
 /// command in its on own device record.
@@ -14,7 +13,7 @@ use crate::telemetry::SentReceivedTab;
 /// uses the obtained public key to encrypt the `SendTabPayload` it created that
 /// contains the tab to send and finally forms the `EncryptedSendTabPayload` that is
 /// then sent to the target device.
-use crate::{device::Device, error::*, scoped_keys::ScopedKey, scopes};
+use crate::{device::Device, error::*, scoped_keys::ScopedKey, scopes, telemetry};
 use rc_crypto::ece::{self, Aes128GcmEceWebPush, EcKeyComponents, WebPushParams};
 use rc_crypto::ece_crypto::{RcCryptoLocalKeyPair, RcCryptoRemotePublicKey};
 use serde_derive::*;
@@ -51,8 +50,8 @@ pub struct SendTabPayload {
 }
 
 impl SendTabPayload {
-    pub fn single_tab(title: &str, url: &str) -> (Self, SentReceivedTab) {
-        let sent_telemetry = SentReceivedTab {
+    pub fn single_tab(title: &str, url: &str) -> (Self, telemetry::SentCommand) {
+        let sent_telemetry = telemetry::SentCommand {
             flow_id: Guid::random().to_string(),
             stream_id: Guid::random().to_string(),
         };
