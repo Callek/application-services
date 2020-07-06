@@ -41,11 +41,14 @@ commands:
             echo 'export PATH="$HOME/.bin:$PATH"' >> $BASH_ENV
             popd
   install-rust:
+    parameters:
+      rust-platform:
+        type: string
     steps:
       - run:
           name: Install Rust
           command: |
-            RUSTUP_PLATFORM=x86_64-apple-darwin
+            RUSTUP_PLATFORM=<<parameters.rust-platform>>
             RUSTUP_VERSION=1.18.3
             RUSTUP_SHA256=16734a9a2d87a3054bd4eea962642687e50a34b6e73e17df6f3361c2c534dc30
             curl -sfSL --retry 5 --retry-delay 10 -O "https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${RUSTUP_PLATFORM}/rustup-init"
@@ -269,13 +272,14 @@ jobs:
     # enough and not extravagantly expensive!
     steps:
       - restore-sccache-cache
-      # Required because of `machine: true`?
+      # Not on a machine that comes with rustup.
+      - install-rust:
+          rust-platform: x86_64-unknown-linux-gnu
       - run: sudo apt-get update
       - test-setup
       - run: sudo apt-get install libssl-dev
-      # TODO:
       - run: cargo install cargo-tarpaulin
-      # - install-cargo-tarpaulin
+      # TODO: - install-cargo-tarpaulin
       - run:
           name: Run rust tests to produce coverage.
           command: cargo tarpaulin --workspace --out Xml
@@ -357,7 +361,8 @@ jobs:
           name: Restore sccache cache
           key: sccache-cache-macos-{{ arch }}
       - checkout
-      - install-rust
+      - install-rust:
+          rust-platform: x86_64-apple-darwin
       - setup-rust-toolchain
       - run:
           name: Toggle brew auto-updates
