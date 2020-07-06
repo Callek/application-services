@@ -225,17 +225,6 @@ commands:
       - store_artifacts:
           path: /tmp/sccache.log
           destination: logs/sccache.log
-  install-cargo-tarpaulin:
-    steps:
-      - run:
-          command: |
-            TARP_VERSION=0.14.1
-            TARP_ARCHIVE="cargo-tarpaulin-${TARP_VERSION}-travis.tar.gz"
-            TARP_URL="https://github.com/xd009642/tarpaulin/releases/download/${TARP_VERSION}/${TARP_ARCHIVE}"
-            curl -sfSL --retry 5 --retry-delay 10 "${TARP_URL}" | tar xvz -C "$HOME/.cargo/bin"
-            # Print the version to verify the install worked.
-            cargo tarpaulin --version
-
 jobs:
   Check Swift formatting:
     macos:
@@ -279,8 +268,10 @@ jobs:
       - run: sudo apt-get update
       - test-setup
       - run: sudo apt-get install libssl-dev
-      # - run: cargo install cargo-tarpaulin
-      - install-cargo-tarpaulin
+      # The download from `cargo-tarpaulin`'s releases assumes
+      # native libraries are organized differently, so we must
+      # build it.
+      - run: cargo install cargo-tarpaulin
       - run:
           name: Run rust tests to produce coverage.
           command: cargo tarpaulin --workspace --verbose --out Xml
