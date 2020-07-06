@@ -223,9 +223,6 @@ commands:
           destination: logs/sccache.log
   install-cargo-tarpaulin:
     steps:
-      - run: sudo apt-get install libssl-dev
-      # Very slow build...
-      # - run: cargo install cargo-tarpaulin
       - run:
           command: |
             TARP_VERSION=0.14.1
@@ -267,11 +264,17 @@ jobs:
   Generate code coverage:
     # Not sure why this is required, but it's documented as such
     machine: true
-    # resource-class: ???
+    # Can we get away with lower?
+    resource-class: xlarge
     steps:
-      - test-setup
       - restore-sccache-cache
-      - install-cargo-tarpaulin
+      # Required because of `machine: true`?
+      - run: sudo apt-get update
+      - test-setup
+      - run: sudo apt-get install libssl-dev
+      # TODO:
+      - run: cargo install cargo-tarpaulin
+      # - install-cargo-tarpaulin
       - run:
           name: Run rust tests to produce coverage.
           command: cargo tarpaulin --workspace --out Xml
