@@ -221,6 +221,19 @@ commands:
       - store_artifacts:
           path: /tmp/sccache.log
           destination: logs/sccache.log
+  install-cargo-tarpaulin:
+    steps:
+      - run: sudo apt-get install libssl-dev
+      # Very slow build...
+      # - run: cargo install cargo-tarpaulin
+      - run:
+          command: |
+            TARP_VERSION=0.14.1
+            TARP_ARCHIVE="cargo-tarpaulin-${TARP_VERSION}-travis.tar.gz"
+            TARP_URL="https://github.com/xd009642/tarpaulin/releases/download/${TARP_VERSION}/${TARP_ARCHIVE}"
+            curl -sfSL --retry 5 --retry-delay 10 "${TARP_URL}" | tar xvz -C "$HOME/.cargo/bin"
+            # Print the version to verify the install worked.
+            cargo tarpaulin --version
 
 jobs:
   Check Swift formatting:
@@ -250,6 +263,21 @@ jobs:
       - run: rustup component add clippy
       - run: cargo clippy --version
       - run: bash automation/all_clippy_checks.sh
+      - save-sccache-cache
+  Generate code coverage:
+    # Not sure why this is required, but it's documented as such
+    machine: true
+    # resource-class: ???
+    steps:
+      - test-setup
+      - restore-sccache-cache
+      - install-cargo-tarpaulin
+      - run:
+          name: Run rust tests to produce coverage.
+          command: cargo tarpaulin --workspace --out Xml
+      - run:
+          name: Upload to codecov.io
+          command: bash <(curl -s https://codecov.io/bash) -Z -f cobertura.xml
       - save-sccache-cache
   Check Protobuf files are up-to-date:
     docker:
@@ -504,6 +532,9 @@ workflows:
       - Rust tests
       - Rust benchmarks
       - Sync integration tests
+  coverage:
+    jobs:
+      - Generate code coverage
   carthage-framework:
     jobs:
       - iOS build and test:
