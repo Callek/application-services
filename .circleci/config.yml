@@ -279,11 +279,11 @@ jobs:
       - run: sudo apt-get update
       - test-setup
       - run: sudo apt-get install libssl-dev
-      - run: cargo install cargo-tarpaulin
-      # TODO: - install-cargo-tarpaulin
+      # - run: cargo install cargo-tarpaulin
+      - install-cargo-tarpaulin
       - run:
           name: Run rust tests to produce coverage.
-          command: cargo tarpaulin --workspace --out Xml
+          command: cargo tarpaulin --workspace --verbose --out Xml
       - run:
           name: Upload to codecov.io
           command: bash <(curl -s https://codecov.io/bash) -Z -f cobertura.xml
