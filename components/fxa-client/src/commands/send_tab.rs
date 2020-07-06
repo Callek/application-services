@@ -43,9 +43,9 @@ pub struct SendTabPayload {
     pub entries: Vec<TabHistoryEntry>,
     // XXX - tests don't fail yet even though none add these 2 new items and
     // they aren't marked as optional for serde, which seems odd!
-    #[serde(rename = "flowID")]
+    #[serde(rename = "flowID", default)]
     pub flow_id: String,
-    #[serde(rename = "streamID")]
+    #[serde(rename = "streamID", default)]
     pub stream_id: String,
 }
 
@@ -233,4 +233,30 @@ fn extract_oldsync_key_components(oldsync_key: &ScopedKey) -> Result<(Vec<u8>, V
     let kxcs = base64::decode_config(&kxcs, base64::URL_SAFE_NO_PAD)?;
     let ksync = oldsync_key.key_bytes()?;
     Ok((ksync, kxcs))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_minimal_parse_payload() {
+        let minimal = r#"{ "entries": []}"#;
+        let payload: SendTabPayload = serde_json::from_str(minimal).expect("should work");
+        assert_eq!(payload.flow_id, "".to_string());
+    }
+
+    #[test]
+    fn test_payload() {
+        let (payload, telem) = SendTabPayload::single_tab("title", "http://example.com");
+        let json = serde_json::to_string(&payload).expect("should work");
+        assert_eq!(telem.flow_id.len(), 12);
+        assert_eq!(telem.stream_id.len(), 12);
+        assert_ne!(telem.flow_id, telem.stream_id);
+        let p2: SendTabPayload = serde_json::from_str(&json).expect("should work");
+        // no equal derived...
+        assert_eq!(payload.entries[0].url, "http://example.com".to_string());
+        assert_eq!(payload.flow_id, p2.flow_id);
+        assert_eq!(payload.stream_id, p2.stream_id);
+    }
 }
