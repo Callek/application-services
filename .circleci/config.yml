@@ -263,7 +263,8 @@ jobs:
       - save-sccache-cache
   Generate code coverage:
     # Not sure why this is required, but it's documented as such
-    machine: true
+    machine:
+      image: ubuntu-1604:202004-01
     # Can't specify `resource-class` for `machine: true` so let's hope it's
     # enough and not extravagantly expensive!
     steps:
