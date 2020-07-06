@@ -264,8 +264,8 @@ jobs:
   Generate code coverage:
     # Not sure why this is required, but it's documented as such
     machine: true
-    # Can we get away with lower?
-    resource-class: xlarge
+    # Can't specify `resource-class` for `machine: true` so let's hope it's
+    # enough and not extravagantly expensive!
     steps:
       - restore-sccache-cache
       # Required because of `machine: true`?
