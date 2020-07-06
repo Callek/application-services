@@ -10,7 +10,18 @@
 
 use serde_derive::*;
 
-// First, constituent parts
+/// The reason a tab/command was received.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ReceivedReason {
+    /// A push notification for the command was received.
+    Push,
+    /// Discovered while handling a push notification for a later message.
+    PushMissed,
+    /// Explicit polling for missed commands.
+    Poll,
+}
+
 #[derive(Debug, Serialize)]
 pub struct SentCommand {
     pub flow_id: String,
@@ -21,6 +32,7 @@ pub struct SentCommand {
 pub struct ReceivedCommand {
     pub flow_id: String,
     pub stream_id: String,
+    pub reason: ReceivedReason,
 }
 
 // We have a naive strategy to avoid unbounded memory growth - the intention

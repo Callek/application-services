@@ -9,9 +9,7 @@ use crate::{
     },
     error::*,
     http_client::GetDeviceResponse,
-    scopes,
-    telemetry::ReceivedCommand,
-    FirefoxAccount, IncomingDeviceCommand,
+    scopes, telemetry, FirefoxAccount, IncomingDeviceCommand,
 };
 
 impl FirefoxAccount {
@@ -62,6 +60,7 @@ impl FirefoxAccount {
         &mut self,
         sender: Option<GetDeviceResponse>,
         payload: serde_json::Value,
+        reason: telemetry::ReceivedReason,
     ) -> Result<IncomingDeviceCommand> {
         let send_tab_key: PrivateSendTabKeys =
             match self.state.commands_data.get(send_tab::COMMAND_NAME) {
@@ -77,9 +76,10 @@ impl FirefoxAccount {
         match encrypted_payload.decrypt(&send_tab_key) {
             Ok(payload) => {
                 // It's an incoming tab, which we record telemetry for.
-                let recd_telemetry = ReceivedCommand {
+                let recd_telemetry = telemetry::ReceivedCommand {
                     flow_id: payload.flow_id.clone(),
                     stream_id: payload.stream_id.clone(),
+                    reason,
                 };
                 self.telemetry
                     .borrow_mut()

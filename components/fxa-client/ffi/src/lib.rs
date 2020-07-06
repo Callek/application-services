@@ -12,7 +12,7 @@ use ffi_support::{
     ConcurrentHandleMap, ExternError, FfiStr,
 };
 use fxa_client::{
-    device::{Capability as DeviceCapability, PushSubscription},
+    device::{Capability as DeviceCapability, CommandFetchReason, PushSubscription},
     migrator::MigrationState,
     msg_types, FirefoxAccount,
 };
@@ -488,10 +488,11 @@ pub extern "C" fn fxa_handle_session_token_change(
 pub extern "C" fn fxa_poll_device_commands(handle: u64, error: &mut ExternError) -> ByteBuffer {
     log::debug!("fxa_poll_device_commands");
     ACCOUNTS.call_with_result_mut(error, handle, |fxa| {
-        fxa.poll_device_commands().map(|cmds| {
-            let commands = cmds.into_iter().map(|e| e.into()).collect();
-            fxa_client::msg_types::IncomingDeviceCommands { commands }
-        })
+        fxa.poll_device_commands(&CommandFetchReason::Poll)
+            .map(|cmds| {
+                let commands = cmds.into_iter().map(|e| e.into()).collect();
+                fxa_client::msg_types::IncomingDeviceCommands { commands }
+            })
     })
 }
 
